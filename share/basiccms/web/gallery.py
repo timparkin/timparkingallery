@@ -51,7 +51,7 @@ class Gallerys(common.Page):
                     shortDescription = ''
                 
                 try:
-                    imgsrc='/system/ecommerce/%s/mainImage?size=190x300&sharpen=1.0x0.5%%2b0.7%%2b0.1'%categoryCMSItemMainImage[name]
+                    imgsrc='/system/ecommerce/%s/mainImage?size=190x300&sharpen=2.0x1%%2b1%%2b0.1'%categoryCMSItemMainImage[name]
                 except KeyError:
                     imgsrc='/skin/images/spacer.gif'
                 
@@ -133,7 +133,7 @@ class Gallery(common.Page):
                 name = product.code
                 title = product.title
                 shortDescription = product.summary
-                imgsrc='/system/ecommerce/%s/mainImage?size=190x300&sharpen=1.0x0.5%%2b0.8%%2b0.1'%product.id
+                imgsrc='/system/ecommerce/%s/mainImage?size=190x300&sharpen=2.0x1%%2b1%%2b0.1'%product.id
                 
                 html = T.div(class_='category c%s'%column)[
                     T.a(href=url.here.child(name))[
@@ -170,7 +170,7 @@ class Gallery(common.Page):
     
     def render_admin(self,ctx,data):
         def gotGalleryItem(item):
-            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://admin.dw.timparkin.co.uk:8131/content/Gallery/%s'%item[0].getProtectedObject().id))[ 'Click here to edit gallery description' ] ]
+            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://www.timparkin.co.uk:8161/content/Gallery/%s'%item[0].getProtectedObject().id))[ 'Click here to edit gallery description' ] ]
             
         if common.isAdminOn(ctx):
             avatar = icrux.IAvatar(ctx)
@@ -333,8 +333,8 @@ def getRss(products):
                 break
         if url is None:
             url = '/gallery'
-        imgsrc=u'/system/ecommerce/%s/mainImage?size=1199x1200&amp;sharpen=1.0x0.5%%2b0.8%%2b0.1&amp;quality=95'%p.id
-        thumb =u'/system/ecommerce/%s/mainImage?size=601x631&amp;sharpen=1.0x0.5%%2b0.8%%2b0.1&amp;quality=60'%p.id
+        imgsrc=u'/system/ecommerce/%s/mainImage?size=1199x1200&amp;sharpen=2x1%%2b1%%2b0.1&amp;quality=100'%p.id
+        thumb =u'/system/ecommerce/%s/mainImage?size=601x631&amp;sharpen=2.0x1%%2b1%%2b0.1&amp;quality=100'%p.id
         out+=item%(title,url,thumb,imgsrc,code)
     return XML_TEMPLATE%out
             
@@ -366,7 +366,7 @@ class Photo(common.Page):
     
     def render_admin(self,ctx,data):
         if common.isAdminOn(ctx):
-            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://admin.timparkin.co.uk:8131/ecommerce/product/%s'%self.photo.id))[ 'Click here to edit photo' ] ]
+            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://www.timparkin.co.uk:8161/ecommerce/photos/%s'%self.photo.id))[ 'Click here to edit photo' ] ]
         else:
             return ''
     
@@ -480,27 +480,24 @@ class Photo(common.Page):
             if large is not None:            
                 size = 'size=968x1200&'
                 quality='100'
+                sharpen='sharpen=1.5x1%%2b1%%2b0&'
             else:
                 size = 'size=600x632&'
-            if quality is None:
-                quality = '&quality=60'
-                linkhref='?quality=93'
-                enhance=T.p(class_='enhance')['click to enhance']
-            else:
-                quality = '&quality=100'
-                linkhref='?large=True'
-                enhance = T.p(class_='enhance')['click to see larger']
+                sharpen='sharpen=1.5x1%%2b1%%2b0&'
+            quality = '&quality=100'
+            linkhref='?large=True'
+            enhance = T.p(class_='enhance')['click to see larger']
 
             if large is not None:
                 enhance = T.p(class_='enhance')['click to return to small view']
-                linkhref='?quality=93'
+                linkhref='?quality=100'
                 
                 
             if common.isInverted(ctx) is True:
                 invert='&amp;invert=inverted'
             else:
                 invert=''
-            imgsrc='/system/ecommerce/%s/mainImage?%ssharpen=1.0x0.5%%2b0.8%%2b0.1%s%s'%(self.photo.id,size,quality,invert)
+            imgsrc='/system/ecommerce/%s/mainImage?%s%s%s%s'%(self.photo.id,sharpen,size,quality,invert)
             html = T.a(class_='photo',href=linkhref)[ enhance,T.img(src=imgsrc) ]
             return html
         

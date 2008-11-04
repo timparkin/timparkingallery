@@ -184,16 +184,16 @@ def isInverted(ctx):
     request = inevow.IRequest(ctx)
     if ctx.arg('invert',None) == 'True':
         request.addCookie('invert', 'True', expires=None, path='/')
-        return True
+        return False
     elif ctx.arg('invert',None) == 'False':
         request.addCookie('invert', 'False', expires=None, path='/')
-        return False
+        return True
     request = inevow.IRequest(ctx)
     cookie = request.getCookie('invert')
     if cookie is None or cookie == 'False':
-        return False
-    else:
         return True
+    else:
+        return False
 
 def isAdminOn(ctx):
     request = inevow.IRequest(ctx)

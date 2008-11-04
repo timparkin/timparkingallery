@@ -124,8 +124,8 @@ class ImagingService(object):
 def resizeImageConvert(sourcePath, targetPath, maxSize, sharpen=None, quality=None, size=None, invert=None):
     """Resize image to max size using ImageMagic's convert. Debian's convert
     does not have the -thumbnail option though :(.
-    # convert -font Helvetica -gravity South -background black -fill grey -splice 0x18 -draw "text 0,2 '© Copyright David Ward 1980-2007 - tel: +44 113 2252500 email: info@into-the-light.com web: www.into-the-light.com' address: David Ward, 3 Landsdowne Place, Leeds, United Kingdom LS17 6QR" 1.jpg out.jpg
-    '-font','Helvetica','-gravity','South','-background','black','-fill','grey','-splice','0x18','-draw','"text 0,2 '© Copyright David Ward 1980-2007 - tel: +44 113 2252500 email: info@into-the-light.com web: www.into-the-light.com' address: David Ward, 3 Landsdowne Place, Leeds, United Kingdom LS17 6QR"',
+    # convert -font Helvetica -gravity South -background black -fill grey -splice 0x18 -draw "text 0,2 '© CopyrightTim Parkin 2007-2008 - tel: +44 113 216 7634 email: info@timparkin.co.uk web: www.timparkin.co.uk' address: Tim Parkin, 237 Lidgett Lane, Leeds, United Kingdom LS17 6QR" 1.jpg out.jpg
+    '-font','Helvetica','-gravity','South','-background','black','-fill','grey','-splice','0x18','-draw','"text 0,2 '© Coyright Tim Parkin 2007-2008 - tel: +44 113 216 7634 email: info@timparkin.co.uk web: www.timparkin.co.uk' address: Tim Parkin, 237 Lidgett Lane, Leeds, United Kingdom LS17 6QR"',
     """
 
     if size is not None:
@@ -135,7 +135,7 @@ def resizeImageConvert(sourcePath, targetPath, maxSize, sharpen=None, quality=No
         
     
     if quality is None:
-        quality='70'
+        quality='100'
         
     if invert=='inverted':
         foreback=['white','black']
@@ -153,20 +153,20 @@ def resizeImageConvert(sourcePath, targetPath, maxSize, sharpen=None, quality=No
     if maxSize is None:
         border=32
         points=12
-        label = ['-pointsize','%s'%points,'-font','Helvetica','-gravity','South','-background',foreback[0],'-fill',fill,'-splice','0x%s'%border,'-draw',"text 0,2 '© David Ward 1980-2008 - tel: +44 1432 830781 email: david@into-the-light.com web: www.into-the-light.com address: Rowley Cottage, Westhope, UK. HR4 8BU'"] 
+        label = ['-pointsize','%s'%points,'-font','Helvetica','-gravity','South','-background',foreback[0],'-fill',fill,'-splice','0x%s'%border,'-draw',"text 0,2 '©Tim Parkin 2007-2008 - tel: +44 113 216 7634 email: info@timparkin.co.uk web: www.timparkin.co.uk address: 237 Lidgett Lane, Leeds, UK. LS17 6QR'"] 
     else:
         if not (maxSize[0] == 601 and maxSize[1] == 631) and (maxSize[0] > 500 or maxSize[1] > 500):
             border=64
             points=24
-            label = ['-pointsize','%s'%points,'-font','Helvetica','-gravity','South','-background',foreback[0],'-fill',fill,'-splice','0x%s'%border,'-draw',"text 0,2 '© David Ward 1980-2008, email: info@into-the-light.com web: www.into-the-light.com"] 
+            label = ['-pointsize','%s'%points,'-font','Helvetica','-gravity','South','-background',foreback[0],'-fill',fill,'-splice','0x%s'%border,'-draw',"text 0,2 '©Tim Parkin 2007-2008, email: info@timparkin.co.uk web: www.timparkin.co.uk"] 
         if not(maxSize[0] == 1199 and maxSize[1] == 1200) and (maxSize[0] > 800 or maxSize[1] > 800):
             border=32
             points=12
-            quality='95'
-            sharpen='0.8x0.4+0.5+0.1'
-            label = ['-pointsize','%s'%points,'-font','Helvetica','-gravity','South','-background',foreback[0],'-fill',fill,'-splice','0x%s'%border,'-draw',"text 0,2 '© David Ward 1980-2008 - tel: +44 1432 830781 email: david@into-the-light.com web: www.into-the-light.com address: Rowley Cottage, Westhope, UK. HR4 8B'"]
+            quality='100'
+            sharpen='1x0.5+0.5+0.1'
+            label = ['-pointsize','%s'%points,'-font','Helvetica','-gravity','South','-background',foreback[0],'-fill',fill,'-splice','0x%s'%border,'-draw',"text 0,2 '©Tim Parkin 2007-2008 - tel: +44 113 216 7634 email: info@timparkin.co.uk web: www.timparkin.co.uk address: 237 Lidgett Lane, Leeds, UK. LS17 6QR'"]
         if maxSize[0] == 1199 and maxSize[1] == 1200:
-            quality='95'
+            quality='100'
             border = None
             label = ''
         
@@ -221,7 +221,7 @@ def resizeImagePIL(sourcePath, targetPath, maxSize, neverGrow=False): #data, siz
                 img = img.convert('P', palette=PIL.Image.ADAPTIVE, colors=255, dither=PIL.Image.NONE)
             
             # Save the image to a string
-            img.save(targetPath, quality=70)
+            img.save(targetPath, quality=100)
         except:
             import traceback; traceback.print_exc()
             

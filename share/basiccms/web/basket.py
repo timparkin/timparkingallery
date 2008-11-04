@@ -201,7 +201,7 @@ class ConfirmOrderEmail(common.Page):
 
 
     def render_basket_item(self, ctx, basketItem): 
-        #ctx.tag.fillSlots('thumbnail', T.img(src='/system/ecommerce/%s/mainImage?size=95x150&sharpen=1.0x0.5%%2b0.8%%2b0.1'%basketItem.original.product.id, class_='thumbnail'))
+        #ctx.tag.fillSlots('thumbnail', T.img(src='/system/ecommerce/%s/mainImage?size=95x150&sharpen=2.0x1%%2b1%%2b0.1'%basketItem.original.product.id, class_='thumbnail'))
         ctx.tag.fillSlots('description', T.xml(basketItem.description))
         ctx.tag.fillSlots('unit_price', basketItem.unit_price)
         ctx.tag.fillSlots('quantity_ordered', basketItem.quantity_ordered)

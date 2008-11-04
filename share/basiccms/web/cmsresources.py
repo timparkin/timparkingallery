@@ -66,7 +66,7 @@ class PageResource(common.PagingMixin,common.CMSResource):
 
     def render_admin(self,ctx,data):
         if common.isAdminOn(ctx):
-            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://admin.dw.timparkin.co.uk:8131/Pages/%s'%self.original.id))[ 'Click here to edit page content' ] ]
+            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://www.timparkin.co.uk:8161/Pages/%s'%self.original.id))[ 'Click here to edit page content' ] ]
         else:
             return ''
 

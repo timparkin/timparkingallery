@@ -108,12 +108,12 @@ def addProductFields(form, forCreation=False, restWriter=None, hasOptions=False)
     metadata.add( formal.Field('location', formal.String()) )
     
     lensOptions = [
-        "72mm Schneider Super Angulon f5.6",
-        "90mm Schneider Super Angulon f5.6",
-        "150mm Schneider Apo-Symmar f5.6",
-        "210mm Schneider Apo-Symmar f5.6",
-        "270mm Nikon T*ED f6.3",
-        "400mm Fujinon T f8"
+        "80mm Schneider Super Symmar XL f/4.5",
+        "110mm Schneider Super Symmar XL f/5.6",
+        "150mm Rodenstock Sironar S f/5.6",
+        "240mm Fujinon A f/9",
+        "360mm Nikkor T*ED f/8",
+        "360mm Nikkor T*ED f/11",
     ]
     metadata.add( formal.Field('lens', formal.String(),formal.widgetFactory(formal.SelectOtherChoice, options=lensOptions)  ) )
     
@@ -127,6 +127,8 @@ def addProductFields(form, forCreation=False, restWriter=None, hasOptions=False)
     apertureOptions = ['f/5.6','f/6.3','f/8','f/8⅓','f/8½','f/8⅔','f/16','f/16⅓','f/16½','f/16⅔','f/22','f/22⅓','f/22½','f/22⅔','f/32','f/32⅓','f/32½','f/32⅔','f/45','f/45⅓','f/45½','f/45⅔']
     metadata.add( formal.Field('aperture', formal.String(),formal.widgetFactory(formal.SelectOtherChoice, options=apertureOptions) ) )  
     metadata.add( formal.Field('tiltswing', formal.String()) )
+    metadata.add( formal.Field('fronttilt', formal.Integer()) )
+    metadata.add( formal.Field('reartilt', formal.Integer()) )
     metadata.add( formal.Field('risefall', formal.String()) )
     ndfilters = ['0.3S','0.45S','0.6S','0.75S','0.9S','0.3H','0.45H','0.6H','0.75H','0.9H']
     metadata.add( formal.Field('ndfilters', formal.String(),formal.widgetFactory(formal.SelectOtherChoice, options=ndfilters)) )
