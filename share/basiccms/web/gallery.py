@@ -170,7 +170,7 @@ class Gallery(common.Page):
     
     def render_admin(self,ctx,data):
         def gotGalleryItem(item):
-            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://www.timparkin.co.uk:8161/content/Gallery/%s'%item[0].getProtectedObject().id))[ 'Click here to edit gallery description' ] ]
+            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://admin.timparkin.co.uk/content/Gallery/%s'%item[0].getProtectedObject().id))[ 'Click here to edit gallery description' ] ]
             
         if common.isAdminOn(ctx):
             avatar = icrux.IAvatar(ctx)
@@ -366,7 +366,7 @@ class Photo(common.Page):
     
     def render_admin(self,ctx,data):
         if common.isAdminOn(ctx):
-            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://www.timparkin.co.uk:8161/ecommerce/photos/%s'%self.photo.id))[ 'Click here to edit photo' ] ]
+            return T.div(id='admin')[ T.a(href=url.URL.fromString('http://admin.timparkin.co.uk/ecommerce/photos/%s'%self.photo.id))[ 'Click here to edit photo' ] ]
         else:
             return ''
     

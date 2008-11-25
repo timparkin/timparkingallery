@@ -12,9 +12,9 @@ import email.Utils
 from basiccms.web import common, rssfeed
 from basiccms import blogentry
 from notification import inotification
-from datetime import datetime
 import markdown
 from comments import icomments
+from datetime import *; from dateutil.relativedelta import *
 
 def filter_by_month_year(month_year):
     month,year = month_year.split('-')
@@ -53,6 +53,7 @@ class BlogRSSSource():
     
     def __init__(self,blogitems):
         self.blogitems = blogitems[:10]
+        self.blogitems.reverse()
         
     def title(self, ctx):
         return 'David Ward - Into The Light'
@@ -76,6 +77,34 @@ class BlogRSSSource():
         u = u.clear()
         return str(u)
 
+class CommentRSSSource():
+    
+    def __init__(self,commentItems):
+        self.commentItems = commentItems[:40]
+        self.commentItems.reverse()
+        
+    def title(self, ctx):
+        return 'David Ward - Into The Light - Comments'
+
+    def description(self, ctx):
+        return 'Comments Feed for David Ward\'s Blog'
+
+    def link(self, ctx):
+        u = url.URL.fromContext(ctx)
+        u = u.clear()
+        return str(u)
+
+    def items(self, ctx):
+        items = []
+        for item in self.commentItems:
+            items.append( CommentRSSItem(item) )
+        return items
+
+    def rssLink(self, ctx):
+        u = url.URL.fromContext(ctx).child('commentrss')
+        u = u.clear()
+        return str(u)    
+    
 class RSSItem():
     
     def __init__(self,item):
@@ -99,6 +128,26 @@ class RSSItem():
     def pubDate(self, ctx):
         return self.item.date
 
+class CommentRSSItem():
+    
+    def __init__(self,item):
+        self.item = item
+        
+    def shortTitle(self, ctx):
+        return '%s - %s' %(self.item.relatedToSummary,self.item.authorName)
+        
+
+    def description(self, ctx):
+        return self.item.comment
+
+    def link(self, ctx):
+        u = url.URL.fromContext(ctx).child('blog').child(self.item.relatedToName)
+        u = u.clear()
+        return '%s#%s'%(str(u),'comment-%s'%self.item.id)
+    
+    def pubDate(self, ctx):
+        return self.item.posted
+    
     
 def getItems(ctx,self=None):
     def gotItems(items):
@@ -118,6 +167,37 @@ def getItems(ctx,self=None):
     d.addCallback(gotItems)
     return d    
    
+def getCommentItems(ctx,self=None):
+
+    @defer.inlineCallbacks
+    def gotComments(comments):
+        comments = list(comments)
+        commentMap = {}
+        for comment in comments:
+            commentMap[ comment.id ] = comment
+        for comment in comments:
+            if comment.relatesToCommentId is not None:
+                comment.relatesToComment = commentMap[comment.relatesToCommentId]
+            else:
+                comment.relatesToComment = None
+            followUpComments = []
+            for c in comments:
+                if comment.id == c.relatesToCommentId:
+                    followUpComments.append( c )
+            comment.followUpComments = followUpComments
+            relatedTo = yield storeSession.getItemById(comment.relatesToId)
+            relatedToSummary = icomments.IRelatedToSummarizer(relatedTo).getTitle()
+            comment.relatedToSummary = relatedToSummary
+            comment.relatedToName = relatedTo.name
+
+        defer.returnValue( [c for c in comments if c.approved is True] )
+    
+    
+    avatar = icrux.IAvatar(ctx)
+    storeSession = tubcommon.getStoreSession(ctx)        
+    d = avatar.realm.commentsService.getComments(storeSession,  order='DESCENDING')
+    d.addCallback(gotComments)        
+    return d
     
 def BlogRSS(ctx):
     def gotItems(items):
@@ -125,8 +205,40 @@ def BlogRSS(ctx):
     d = getItems(ctx)
     d.addCallback(gotItems)
     return d
+def CommentRSS(ctx):
+    def gotItems(items):
+        return rssfeed.getRSSFeed( ctx, CommentRSSSource(items) )
+    d = getCommentItems(ctx)
+    d.addCallback(gotItems)
+    return d
     
     
+def formatAgo(ago):
+    if ago.years > 0:
+        return 'last year'
+    if ago.months > 1:
+        return '%s months ago'%ago.months
+    if ago.months > 0:
+        return 'last month'
+    if ago.days > 28:
+        return '4 weeks ago'
+    if ago.days > 21:
+        return '3 weeks ago'
+    if ago.days > 14:
+        return '2 weeks ago'
+    if ago.days > 7:
+        return 'last week'
+    if ago.days >1:
+        return '%s days ago'%ago.days
+    if ago.days >0:
+        return 'yesterday'
+    if ago.hours>0:
+        return '%s hours ago'%ago.hours
+    if ago.minutes>0:
+        return '%s minutes ago'%ago.minutes
+    if ago.seconds>0:
+        return '%s seconds ago'%ago.seconds
+    return ''
 
 class Blog(common.PagingMixin,common.Page):
 
@@ -177,6 +289,15 @@ class Blog(common.PagingMixin,common.Page):
     def render_blogentry(self, ctx, item):
         
         def gotComments(comments):
+            
+            comments = list(comments)
+            try:
+                lastComment = comments[-1].posted
+                ago = relativedelta(datetime.now(),lastComment)
+            except IndexError:
+                lastComment = None
+                ago = None
+                
             tag = ctx.tag
             itemDate = item.getAttributeValue("date", "en")
             try:
@@ -196,6 +317,13 @@ class Blog(common.PagingMixin,common.Page):
             
             tag.fillSlots("url", url.here.child(item.name))
             tag.fillSlots("date", itemDate)
+            if lastComment is not None:
+                tag.fillSlots("lastComment", lastComment.strftime('%d %b %y %H:%M'))
+                tag.fillSlots("ago", formatAgo(ago))
+            else:
+                tag.fillSlots("lastComment", '-')
+                tag.fillSlots("ago", '-')
+                
             tag.fillSlots("day", day)
             tag.fillSlots("title", item.getAttributeValue("title", "en"))
             tag.fillSlots("body", item.getAttributeValue("body", "en"))
@@ -251,29 +379,65 @@ class BlogEntryResource(formal.ResourceMixin, common.Page):
             return ResponseReturnPage(url.here.clear(), self.commentPostedSkin)
         return super(BlogEntryResource, self).renderHTTP(ctx)
 
-    def render_blogentry(self, ctx, data):
+    def render_blogentry(self, ctx, item):
         
-        tag = ctx.tag
-        itemDate = self.original.getAttributeValue("date", "en")
-        d = itemDate.day
-        if 4 <= d <= 20 or 24 <= d <= 30:
-            suffix = "th"
-        else:
-            suffix = ["st", "nd", "rd"][d % 10 - 1]
+        def gotComments(comments):
             
-        m = itemDate.strftime('%B')
-        y = itemDate.strftime('%Y')
-        day = itemDate.strftime('%A')
-        itemDate = '%s%s %s %s'%(d,suffix,m,y)        
-        
-        tag.fillSlots("url", url.here.child(self.original.id))
-        tag.fillSlots("date", itemDate)
-        tag.fillSlots("day", day)
-        tag.fillSlots("title", self.original.getAttributeValue("title", "en"))
-        tag.fillSlots("body", self.original.getAttributeValue("body", "en"))
-        tag.fillSlots("sidebar", self.original.getAttributeValue("sidebar", "en"))
+            comments = list(comments)
+            try:
+                lastComment = comments[-1].posted
+                ago = relativedelta(datetime.now(),lastComment)
+            except IndexError:
+                lastComment = None
+                ago = None
+                
+            tag = ctx.tag
+            itemDate = item.getAttributeValue("date", "en")
+            try:
+                itemDate = itemDate['en']
+            except:
+                pass
+            d = itemDate.day
+            if 4 <= d <= 20 or 24 <= d <= 30:
+                suffix = "th"
+            else:
+                suffix = ["st", "nd", "rd"][d % 10 - 1]
+                
+
+                
+            m = itemDate.strftime('%B')
+            y = itemDate.strftime('%Y')
+            day = itemDate.strftime('%A')
+            itemDate = '%s%s %s %s'%(d,suffix,m,y)   
+
             
-        return tag
+            tag.fillSlots("url", url.here.child(item.name))
+            tag.fillSlots("date", itemDate)
+            if lastComment is not None:
+                tag.fillSlots("lastComment", lastComment.strftime('%d %b %y %H:%M'))
+                tag.fillSlots("ago", formatAgo(ago))
+            else:
+                tag.fillSlots("lastComment", '-')
+                tag.fillSlots("ago", '-')
+            tag.fillSlots("day", day)
+            tag.fillSlots("title", item.getAttributeValue("title", "en"))
+            tag.fillSlots("body", item.getAttributeValue("body", "en"))
+            tag.fillSlots("sidebar", item.getAttributeValue("sidebar", "en"))
+            comments = list(comments)
+            commentcount = len(comments)
+            if commentcount == 0:
+                tag.fillSlots("comments", 'No Comments')
+            elif commentcount == 1:
+                tag.fillSlots("comments", '1 Comment')
+            else:
+                tag.fillSlots("comments", '%s Comments'%commentcount)
+                
+            return tag
+            
+        storeSession = tubcommon.getStoreSession(ctx) 
+        d = self.avatar.realm.commentsService.getCommentsForItem(storeSession, item)        
+        d.addCallback(gotComments)
+        return d
             
 
     
@@ -281,9 +445,26 @@ class BlogEntryResource(formal.ResourceMixin, common.Page):
         """
         Return the list of comments for the object.
         """
-        return self.avatar.realm.commentsService.getCommentsForItem(self.storeSession,
-                self.original)
+        def gotComments(comments):
+            comments = list(comments)
+            commentMap = {}
+            for comment in comments:
+                commentMap[ comment.id ] = comment
+            for comment in comments:
+                if comment.relatesToCommentId is not None:
+                    comment.relatesToComment = commentMap[comment.relatesToCommentId]
+                else:
+                    comment.relatesToComment = None
+                followUpComments = []
+                for c in comments:
+                    if comment.id == c.relatesToCommentId:
+                        followUpComments.append( c )
+                comment.followUpComments = followUpComments
+            return comments
         
+        d =  self.avatar.realm.commentsService.getCommentsForItem(self.storeSession, self.original)
+        d.addCallback(gotComments)        
+        return d
         
     def render_comment(self, ctx, comment):
         tag = ctx.tag
@@ -296,6 +477,19 @@ class BlogEntryResource(formal.ResourceMixin, common.Page):
             tag.fillSlots("isOwner", '')
         tag.fillSlots("authorEmail", comment.authorEmail)
         tag.fillSlots("comment", T.xml(markdown.markdown(comment.comment)))
+        tag.fillSlots("relatesToCommentId",comment.relatesToCommentId)
+        if hasattr(comment, 'relatesToComment') and comment.relatesToComment is not None:
+            tag.fillSlots("relatesToCommentName",comment.relatesToComment.authorName)
+        else:
+            tag.fillSlots("relatesToCommentName",'main blog entry')
+        if hasattr(comment,'followUpComments') and comment.followUpComments is not None:
+            fTag = T.span(class_='followUps')
+            for f in comment.followUpComments:
+                fTag[ T.a(href="#comment-%s"%f.id,rel='inspires')[ f.authorName ],', ' ]
+            tag.fillSlots("followUpComments",fTag)
+        else:
+            tag.fillSlots("followUpComments",'None')
+            
         return tag
         
 
@@ -305,6 +499,7 @@ class BlogEntryResource(formal.ResourceMixin, common.Page):
         form.addField('authorName', formal.String(required=True), label="Name")
         form.addField('authorEmail', formal.String(required=True), label="Email")
         form.addField('comment', formal.String(required=True), widgetFactory=formal.TextArea)
+        form.addField('relatesToCommentId', formal.Integer(),widgetFactory=formal.Hidden)
         form.addAction(self.postComment)
         return form
         
@@ -326,7 +521,12 @@ class BlogEntryResource(formal.ResourceMixin, common.Page):
         d.addCallback(lambda item: sendCommentNotification(item,ctx,self.original.title))
         d.addCallback(lambda ignore: url.here.add(self.COMMENT_POSTED, 1))
         return d
+    def childFactory(self, ctx, name):
         
+        avatar = icrux.IAvatar(ctx)
+        storeSession = tubcommon.getStoreSession(ctx)
+        return storeSession.getOneItem(where='name=%(name)s',params={'name':self.original.name},itemType=blogentry.BlogEntry).addCallback(
+                lambda blogentry: BlogEntryResource(storeSession, avatar, blogentry))    
         
         
 class ResponseReturnPage(common.Page):

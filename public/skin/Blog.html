@@ -36,6 +36,7 @@
         <h3>rss</h3>
         <div class="item">
           <p>Click <a href="/rss">here</a> to access my rss feed.</p>
+          <p>Click <a href="/commentrss">here</a> to access the comment rss feed.</p>
         </div>
       </div>
     </div>
@@ -48,6 +49,8 @@
     <div class="blogitemlabel">
       <div class="day"><n:slot name="day" /></div>
       <div class="date"><n:slot name="date" /></div>
+      <div class="numComments"><n:slot name="comments" /></div>
+      <div class="lastComment"><em>Last:</em> <n:slot name="ago" /></div>
     </div>
 
     <div id="content">
