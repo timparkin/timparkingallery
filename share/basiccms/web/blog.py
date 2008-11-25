@@ -15,6 +15,24 @@ from notification import inotification
 import markdown
 from comments import icomments
 from datetime import *; from dateutil.relativedelta import *
+from zope.interface import implements
+
+
+class HumanCheckValidator(object):
+    """
+    A pointless example that checks a specific word, 'silly', is entered.
+    """
+    implements(formal.iformal.IValidator)
+
+    word = u'parkin'
+
+    def validate(self, field, value):
+        if value is None:
+            return
+        if value.lower() != self.word.lower():
+            raise formal.FieldValidationError(u'You must enter \'%s\''%self.word)
+
+
 
 def filter_by_month_year(month_year):
     month,year = month_year.split('-')
@@ -84,10 +102,10 @@ class CommentRSSSource():
         self.commentItems.reverse()
         
     def title(self, ctx):
-        return 'David Ward - Into The Light - Comments'
+        return 'Tim Parkin - Still Developing - Comments'
 
     def description(self, ctx):
-        return 'Comments Feed for David Ward\'s Blog'
+        return 'Comments Feed for Tim Parkin\'s Blog'
 
     def link(self, ctx):
         u = url.URL.fromContext(ctx)
@@ -499,6 +517,7 @@ class BlogEntryResource(formal.ResourceMixin, common.Page):
         form.addField('authorName', formal.String(required=True), label="Name")
         form.addField('authorEmail', formal.String(required=True), label="Email")
         form.addField('comment', formal.String(required=True), widgetFactory=formal.TextArea)
+        form.addField('humanCheck', formal.String(required=True,validators=[HumanCheckValidator()]), description="Enter Tim's Surname")
         form.addField('relatesToCommentId', formal.Integer(),widgetFactory=formal.Hidden)
         form.addAction(self.postComment)
         return form
